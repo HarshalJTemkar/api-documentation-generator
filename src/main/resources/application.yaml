@@ -29,6 +29,84 @@ async:
   max-pool-size: 50
   queue-capacity: 100
 
+apidocgen:
+  prompts:
+    # Domain Context - E-commerce Example
+    domainContext:
+      "Payment Processing": "All payment APIs must document PCI-DSS compliance and tokenization strategy"
+      "Order Management": "Orders follow state machine: PENDING -> CONFIRMED -> PROCESSING -> SHIPPED -> DELIVERED"
+      "Inventory": "Real-time inventory sync with warehouse management system"
+      "Pricing": "Dynamic pricing engine with promotional rules and customer segments"
+    
+    # Coding Standards
+    codingStandards:
+      "Error Handling": "GlobalExceptionHandler with ErrorCode enums and correlation IDs"
+      "Validation": "JSR-303 Bean Validation on request DTOs with custom validators"
+      "Transaction Management": "@Transactional with REQUIRES_NEW for audit logging"
+      "API Versioning": "URI versioning pattern /api/v{version}/"
+      "Idempotency": "Idempotent POST/PUT using idempotency-key header"
+     
+    # Business Rule Patterns
+    businessRulePatterns:
+      "Authorization": "Role-based access control with @PreAuthorize annotations"
+      "Rate Limiting": "Redis-based rate limiting per user/API key"
+      "Data Privacy": "GDPR compliance with data anonymization for logs"
+      "Discounts": "Discount stacking rules applied in order: customer > category > product"
+    
+    # Technical Patterns
+    technicalPatterns:
+      "Caching": "L1: Caffeine (local), L2: Redis (distributed)"
+      "Database": "PostgreSQL primary, read replicas for reporting"
+      "Messaging": "Kafka for event-driven communication"
+      "External APIs": "Circuit breaker (Resilience4j) for third-party calls"
+    
+    # Terminology Mapping
+    terminologyMapping:
+      "usr": "User"
+      "txn": "Transaction"
+      "ord": "Order"
+      "prd": "Product"
+      "inv": "Inventory"
+      "crt": "Shopping Cart"
+      "amt": "Amount"
+
+    # Security Checkpoints
+    securityCheckpoints:
+      - "Authentication mechanism (JWT, OAuth2, etc.)"
+      - "Authorization checks (@PreAuthorize, @Secured)"
+      - "Input sanitization for SQL injection prevention"
+      - "Rate limiting to prevent abuse"
+      - "Sensitive data handling (encryption, masking)"
+
+    # Performance Checkpoints
+    performanceCheckpoints:
+      - "Database query optimization (N+1 queries)"
+      - "Caching strategy and TTL"
+      - "Pagination for large result sets"
+      - "Async processing for long-running operations"
+      - "Connection pooling configuration"
+
+    # Compliance Requirements
+    complianceRequirements:
+      - "GDPR: Personal data processing and retention"
+      - "PCI-DSS: Credit card data handling"
+      - "SOC2: Audit logging and data integrity"
+
+    # Entity-Specific Rules
+    entitySpecificRules:
+      "User":
+        - "Identify all PII fields (name, email, phone, address)"
+        - "Document consent management for marketing"
+        - "Explain password hashing algorithm"
+      "Payment":
+        - "Document tokenization process"
+        - "Explain 3D Secure implementation"
+        - "Detail fraud detection checks"
+      "Order":
+        - "Document state transitions and triggers"
+        - "Explain inventory reservation logic"
+        - "Detail refund and cancellation rules"
+
 # Actuator
 management:
   endpoints:
