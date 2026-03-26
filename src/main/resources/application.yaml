@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: api-documentation-generator
+  
+  profiles:
+    active: dev
+  
+  messages:
+    basename: messages
+    encoding: UTF-8
+  
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=5000,expireAfterWrite=1h
+
+# Ollama Configuration
+ollama:
+  base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+  model: ${OLLAMA_MODEL:llama3.1:8b}
+  connection-timeout: 10000
+  read-timeout: 300000
+  max-connections: 100
+  temperature: 0.1
+
+# Async Configuration
+async:
+  core-pool-size: 10
+  max-pool-size: 50
+  queue-capacity: 100
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+# Logging
+logging:
+  level:
+    root: INFO
+    '[harshal.temkar.apidocgen]': DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{correlationId}] %-5level %logger{36} - %msg%n"

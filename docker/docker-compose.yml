@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # Ollama LLM Service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-llm
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    networks:
+      - apidocgen-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: serve
+
+  # Pull LLM Model (one-time setup)
+  ollama-setup:
+    image: ollama/ollama:latest
+    container_name: ollama-setup
+    depends_on:
+      - ollama
+    networks:
+      - apidocgen-network
+    entrypoint: /bin/sh
+    command: >
+      -c "
+      sleep 10 &&
+      ollama pull llama3.1:8b &&
+      echo 'Model llama3.1:8b downloaded successfully'
+      "
+    restart: "no"
+
+  # API Documentation Generator Application
+  api-doc-gen:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api-documentation-generator
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=llama3.1:8b
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - apidocgen-network
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  ollama-data:
+    driver: local
+
+networks:
+  apidocgen-network:
+    driver: bridge

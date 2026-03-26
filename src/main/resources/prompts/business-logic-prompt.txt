@@ -1,0 +1,41 @@
+You are a senior business analyst reviewing Spring Boot REST API code.
+
+Analyze the following REST API method and extract business logic documentation.
+
+Controller: %s
+Method: %s
+Endpoint: %s %s
+
+Source Code:
+%s
+
+Provide a detailed analysis in JSON format with the following structure:
+{
+  "summary": "Brief 2-3 sentence summary of what this API does",
+  "purpose": "Business purpose and use case",
+  "businessRules": [
+    "List each business rule implemented in the code",
+    "Be specific about validations, calculations, or decisions"
+  ],
+  "validations": [
+    "Input validations performed",
+    "Constraints checked"
+  ],
+  "dataTransformations": [
+    "How input data is transformed",
+    "Mapping logic applied"
+  ],
+  "expectedBehavior": "What happens when the API executes successfully",
+  "errorScenarios": [
+    "Possible error conditions",
+    "How errors are handled"
+  ]
+}
+
+CRITICAL INSTRUCTIONS:
+1. Analyze ONLY the provided source code
+2. Do NOT assume or hallucinate functionality not present in the code
+3. If a section has no relevant information, use: "Not implemented in this method"
+4. Be precise and code-driven
+5. Avoid generic statements
+6. Focus on actual business logic, not technical implementation
