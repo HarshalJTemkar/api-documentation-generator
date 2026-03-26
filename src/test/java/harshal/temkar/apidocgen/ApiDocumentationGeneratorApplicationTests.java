@@ -8,6 +8,6 @@ class ApiDocumentationGeneratorApplicationTests {
 
 	@Test
 	void contextLoads() {
+		// Validates Spring context loads successfully
 	}
-
 }

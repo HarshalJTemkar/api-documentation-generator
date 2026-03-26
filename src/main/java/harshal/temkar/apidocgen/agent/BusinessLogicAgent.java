@@ -3,23 +3,17 @@ package harshal.temkar.apidocgen.agent;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import harshal.temkar.apidocgen.model.dto.ApiEndpointInfo;
 import harshal.temkar.apidocgen.model.dto.BusinessLogicDoc;
 import harshal.temkar.apidocgen.service.OllamaService;
+import harshal.temkar.apidocgen.service.PromptBuilderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Agent responsible for extracting business logic using LLM.
- * 
- * Uses Ollama to analyze:
- * - Business rules
- * - Validations
- * - Data transformations
- * - Expected behavior
- * - Error scenarios
- * 
- * Caching: Results cached by method signature hash.
+ * Enhanced agent with domain-aware prompt generation.
  */
 
 @Component
@@ -27,74 +21,59 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BusinessLogicAgent implements Agent<ApiEndpointInfo, BusinessLogicDoc> {
 
-    private final OllamaService ollamaService;
+	private final OllamaService ollamaService;
+	private final PromptBuilderService promptBuilderService;
+	private final ObjectMapper objectMapper;
 
-    private static final String BUSINESS_LOGIC_PROMPT = """
-            Analyze the following Java REST API method and provide business logic documentation.
-            
-            Controller: %s
-            Method: %s
-            HTTP: %s %s
-            
-            Source Code:
-            ```java
-            %s
-            ```
-            
-            Extract:
-            1. Summary: Brief description of what this API does
-            2. Purpose: Business purpose of this endpoint
-            3. Business Rules: List all business rules implemented
-            4. Validations: Input validations and constraints
-            5. Data Transformations: How data is transformed/mapped
-            6. Expected Behavior: Normal execution flow outcome
-            7. Error Scenarios: Possible error cases and handling
-            
-            Respond in JSON format with keys: summary, purpose, businessRules, validations, 
-            dataTransformations, expectedBehavior, errorScenarios
-            
-            IMPORTANT:
-            - Do NOT provide generic/default descriptions
-            - Analyze ONLY the actual code provided
-            - If no business logic exists, state "No business logic found"
-            - Be specific and code-driven in your analysis
-            """;
+	@Override
+	@Cacheable(value = "llmResponses", key = "#input.methodName + '_' + #input.controllerClassName")
+	public BusinessLogicDoc execute(ApiEndpointInfo input, String correlationId) {
+		log.info("[{}] BusinessLogicAgent: Analyzing with domain context: {}.{}", correlationId,
+				input.getControllerClassName(), input.getMethodName());
 
-    @Override
-    @Cacheable(value = "llmResponses", key = "#input.methodName + '_' + #input.controllerClassName")
-    public BusinessLogicDoc execute(ApiEndpointInfo input, String correlationId) {
-        log.info("[{}] BusinessLogicAgent: Analyzing business logic for {}.{}", 
-                correlationId, input.getControllerClassName(), input.getMethodName());
+		// Build domain-aware prompt
+		String prompt = promptBuilderService.buildBusinessLogicPrompt(input, correlationId);
 
-        String prompt = String.format(
-                BUSINESS_LOGIC_PROMPT,
-                input.getControllerClassName(),
-                input.getMethodName(),
-                input.getHttpMethod(),
-                input.getUri(),
-                input.getMethodSourceCode()
-        );
+		log.debug("[{}] Generated prompt:\n{}", correlationId, prompt);
 
-        long startTime = System.currentTimeMillis();
-        String llmResponse = ollamaService.generateCompletion(prompt, correlationId);
-        long duration = System.currentTimeMillis() - startTime;
+		long startTime = System.currentTimeMillis();
+		String llmResponse = ollamaService.generateCompletion(prompt, correlationId);
+		long duration = System.currentTimeMillis() - startTime;
 
-        log.info("[{}] BusinessLogicAgent completed in {}ms", correlationId, duration);
+		log.info("[{}] BusinessLogicAgent completed in {}ms", correlationId, duration);
 
-        return parseBusinessLogicResponse(llmResponse);
-    }
+		return parseBusinessLogicResponse(llmResponse, correlationId);
+	}
 
-    @Override
-    public String getAgentName() {
-        return "BusinessLogicAgent";
-    }
+	@Override
+	public String getAgentName() {
+		return "BusinessLogicAgent";
+	}
 
-    private BusinessLogicDoc parseBusinessLogicResponse(String llmResponse) {
-        // Parse LLM JSON response
-        // Implementation would use Jackson ObjectMapper
-        // Simplified for brevity
-        return BusinessLogicDoc.builder()
-                .summary("Extracted from LLM")
-                .build();
-    }
+	private BusinessLogicDoc parseBusinessLogicResponse(String llmResponse, String correlationId) {
+		try {
+			// Extract JSON from LLM response (may include markdown)
+			String jsonContent = extractJsonFromResponse(llmResponse);
+
+			return objectMapper.readValue(jsonContent, BusinessLogicDoc.class);
+
+		} catch (Exception e) {
+			log.error("[{}] Failed to parse LLM response: {}", correlationId, e.getMessage());
+
+			// Fallback: return raw response in summary
+			return BusinessLogicDoc.builder().summary(llmResponse).build();
+		}
+	}
+
+	private String extractJsonFromResponse(String response) {
+		// LLM might wrap JSON in markdown code blocks
+		if (response.contains("```json")) {
+			int start = response.indexOf("```json") + 7;
+			int end = response.lastIndexOf("```");
+			return response.substring(start, end).trim();
+		}
+
+		// Or return as-is if already JSON
+		return response.trim();
+	}
 }
