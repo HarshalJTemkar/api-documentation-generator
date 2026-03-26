@@ -1,0 +1,12 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+ollama:
+  base-url: http://localhost:11434
+  model: llama3.1:8b
+
+logging:
+  level:
+    '[harshal.temkar.apidocgen]': DEBUG

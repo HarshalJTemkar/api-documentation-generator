@@ -1,0 +1,48 @@
+You are a senior software architect documenting technical workflows.
+
+Analyze the following REST API method and document its technical execution flow.
+
+Controller: %s
+Method: %s
+Endpoint: %s %s
+
+Source Code:
+%s
+
+Provide a detailed technical workflow in JSON format:
+{
+  "workflowSummary": "High-level technical execution summary",
+  "steps": [
+    {
+      "stepNumber": 1,
+      "description": "What happens in this step",
+      "componentInvolved": "Controller/Service/Repository/External API",
+      "action": "Specific action performed"
+    }
+  ],
+  "serviceDependencies": [
+    "List all injected services/repositories used"
+  ],
+  "databaseOperations": [
+    "SQL queries executed",
+    "Transaction boundaries"
+  ],
+  "externalApiCalls": [
+    "Third-party API integrations",
+    "HTTP clients used"
+  ],
+  "transactionBoundary": "@Transactional scope if applicable",
+  "performanceConsiderations": [
+    "Potential N+1 query issues",
+    "Caching opportunities",
+    "Bottlenecks"
+  ]
+}
+
+CRITICAL INSTRUCTIONS:
+1. Document ONLY what exists in the code
+2. Do NOT invent technical details
+3. If no database operations exist, state: "No database operations"
+4. Be technically precise
+5. Include actual method calls and class names
+6. Focus on execution flow, not business logic

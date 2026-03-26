@@ -1,0 +1,13 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+ollama:
+  base-url: ${OLLAMA_BASE_URL}
+  model: ${OLLAMA_MODEL}
+
+logging:
+  level:
+    root: WARN
+    '[harshal.temkar.apidocgen]': INFO
