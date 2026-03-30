@@ -257,29 +257,50 @@ public class PromptBuilderService {
 
 	// Base prompt templates
 	private String getBusinessLogicBasePrompt() {
-		return """
-				You are a senior business analyst with deep expertise in enterprise software documentation.
-
-				Analyze the following REST API method and extract comprehensive business logic documentation.
-
-				**API Details:**
-				- Controller: {controllerClassName}
-				- Method: {methodName}
-				- Endpoint: {httpMethod} {uri}
-
-				**Source Code:**
-				```java
-				{sourceCode}
-				```
-
-				**Analysis Instructions:**
-				1. Read the code carefully and identify actual business logic
-				2. Do NOT assume or hallucinate functionality
-				3. Focus on business rules, not technical implementation
-				4. Use domain terminology from the context provided below
-				5. Document compliance aspects if dealing with sensitive data
-
-				""";
+	    return """
+	        You are a senior business analyst with deep expertise in enterprise software documentation.
+	        
+	        Analyze the following REST API method and extract comprehensive business logic documentation.
+	        
+	        **API Details:**
+	        - Controller: {controllerClassName}
+	        - Method: {methodName}
+	        - Endpoint: {httpMethod} {uri}
+	        
+	        **Source Code:**
+	        ```java
+	        {sourceCode}
+	        ```
+	        
+	        **Analysis Instructions:**
+	        1. Read the code carefully and identify actual business logic
+	        2. Do NOT assume or hallucinate functionality
+	        3. Focus on business rules, not technical implementation
+	        4. Use domain terminology from the context provided below
+	        5. Document compliance aspects if dealing with sensitive data
+	        
+	        **CRITICAL OUTPUT REQUIREMENTS:**
+	        - Respond with VALID JSON only
+	        - Use double quotes for all strings
+	        - No comments in JSON
+	        - No trailing commas
+	        - Escape special characters in strings
+	        - Do not wrap JSON in markdown code blocks
+	        - Ensure all array and object brackets are properly closed
+	        
+	        **Expected JSON Structure (copy this exactly):**
+	        {
+	          "summary": "string value here",
+	          "purpose": "string value here",
+	          "businessRules": ["rule1", "rule2"],
+	          "validations": ["validation1", "validation2"],
+	          "dataTransformations": ["transformation1"],
+	          "expectedBehavior": "string value here",
+	          "errorScenarios": ["error1", "error2"]
+	        }
+	        
+	        Respond with ONLY the JSON object, nothing else.
+	        """;
 	}
 
 	private String getTechnicalWorkflowBasePrompt() {

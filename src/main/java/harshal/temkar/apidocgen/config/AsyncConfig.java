@@ -2,37 +2,54 @@ package harshal.temkar.apidocgen.config;
 
 import java.util.concurrent.Executor;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.web.context.request.async.TimeoutCallableProcessingInterceptor;
+import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * Async configuration for non-blocking agent execution.
+ * Enhanced async configuration with proper timeout handling.
  * 
- * Enables parallel processing of multiple API documentation requests. Critical
- * for batch Excel processing with 100+ APIs.
+ * Timeouts: - Agent execution: 10 minutes (LLM can be slow) - Web async
+ * requests: 10 minutes - Connection timeout: 10 seconds
  * 
- * Thread Pool Configuration: - Core pool size: 10 (minimum active threads) -
- * Max pool size: 50 (peak load handling) - Queue capacity: 100 (buffer for
- * burst traffic)
- * 
- * Performance Impact: - Supports concurrent analysis of 50 APIs - Non-blocking
- * LLM calls - Efficient CPU utilization
+ * Performance: - Core pool: 10 threads - Max pool: 50 threads - Queue: 100
+ * requests
  */
-
 @Configuration
-public class AsyncConfig implements AsyncConfigurer {
+@EnableAsync
+public class AsyncConfig implements AsyncConfigurer, WebMvcConfigurer {
 
+	@Value("${async.core-pool-size:10}")
+	private int corePoolSize;
+
+	@Value("${async.max-pool-size:50}")
+	private int maxPoolSize;
+
+	@Value("${async.queue-capacity:100}")
+	private int queueCapacity;
+
+	@Value("${async.timeout:600000}")
+	private long asyncTimeout;
+
+	/**
+	 * Thread pool for agent execution.
+	 */
 	@Bean(name = "agentExecutor")
 	Executor agentExecutor() {
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-		executor.setCorePoolSize(10);
-		executor.setMaxPoolSize(50);
-		executor.setQueueCapacity(100);
+		executor.setCorePoolSize(corePoolSize);
+		executor.setMaxPoolSize(maxPoolSize);
+		executor.setQueueCapacity(queueCapacity);
 		executor.setThreadNamePrefix("agent-exec-");
 		executor.setWaitForTasksToCompleteOnShutdown(true);
 		executor.setAwaitTerminationSeconds(60);
+		executor.setRejectedExecutionHandler(new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
 		executor.initialize();
 		return executor;
 	}
@@ -40,5 +57,19 @@ public class AsyncConfig implements AsyncConfigurer {
 	@Override
 	public Executor getAsyncExecutor() {
 		return agentExecutor();
+	}
+
+	/**
+	 * Configure async support with custom timeout.
+	 */
+	@Override
+	public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
+		configurer.setDefaultTimeout(asyncTimeout);
+		configurer.registerCallableInterceptors(timeoutInterceptor());
+	}
+
+	@Bean
+	TimeoutCallableProcessingInterceptor timeoutInterceptor() {
+		return new TimeoutCallableProcessingInterceptor();
 	}
 }
