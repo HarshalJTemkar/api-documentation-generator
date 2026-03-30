@@ -4,6 +4,11 @@ spring:
   
   profiles:
     active: dev
+
+  # Add MVC async configuration
+  mvc:
+    async:
+      request-timeout: 600000  # 10 minutes (600,000 ms)
   
   messages:
     basename: messages
@@ -17,7 +22,7 @@ spring:
 # Ollama Configuration
 ollama:
   base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
-  model: ${OLLAMA_MODEL:llama3.1:8b}
+  model: ${OLLAMA_MODEL:llama3.2:1b}
   connection-timeout: 10000
   read-timeout: 300000
   max-connections: 100
